@@ -92,12 +92,12 @@ Along with the name of the state we have the two-letter abbreviation and we have
 1.  What are the dimensions of the Denny's dataset?
     (Hint: Use inline R code and functions like `nrow` and `ncol` to compose your answer.) What does each row in the dataset represent?
     What are the variables?
-    - *The Denny's dataset is `r nrow(dennys)` rows by `r ncol(dennys)` columns. Each row is gives data on a single Denny's location somewhere in the USA. The variables are `adress`, `city`, `state`, `zip`, `longitude`, and `latitude`.*
+    - *The Denny's dataset is `r nrow(dennys)` rows by `r ncol(dennys)` columns. Each row is gives data on a single Denny's location. The variables are `adress`, `city`, `state`, `zip`, `longitude`, and `latitude`.*
 
 2.  What are the dimensions of the La Quinta's dataset?
     What does each row in the dataset represent?
     What are the variables?
-    - *The La Quinta dataset is `r nrow(laquinta)` rows by `r ncol(laquinta)` columns. Each row gives data on a single La Quinta Inn somewhere in the USA. The variables are `adress`, `city`, `state`, `zip`, `longitude`, and `latitude`.*
+    - *The La Quinta dataset is `r nrow(laquinta)` rows by `r ncol(laquinta)` columns. Each row gives data on a single La Quinta Inn. The variables are `adress`, `city`, `state`, `zip`, `longitude`, and `latitude`.*
 
 🧶 ✅ ⬆️ Knit, *commit, and push your changes to GitHub with an appropriate commit message. Make sure to commit and push all changed files so that your Git pane is cleared up afterwards.*
 
@@ -107,12 +107,13 @@ We would like to limit our analysis to Denny's and La Quinta locations in the Un
     Are there any La Quinta's locations outside of the US?
     If so, which countries?
     What about Denny's?
-
+- *There are La Quinta's locations in Canada, Mexico, China, New Zealand, Turkey, the UAE, Chile, Colombia, and Equador.*
+  *Denny's, on the other hand, only has locations in the USA.*
 4.  Now take a look at the data.
     What would be some ways of determining whether or not either establishment has any locations outside the US using just the data (and not the websites).
     Don't worry about whether you know how to implement this, just brainstorm some ideas.
     Write down at least one as your answer, but you're welcomed to write down a few options too.
-
+- *I could possibly filter out only those rows that have a `state` value of one of the USA states, which would remove areas from other countries, unless they have the same state code as a U.S. state. I could also try only using those rows with only valid U.S. zipcodes if I knew how to determine which ones were.*
 We will determine whether or not the establishment has a location outside the US using the `state` variable in the `dennys` and `laquinta` datasets.
 We know exactly which states are in the US, and we have this information in the `states` dataframe we loaded.
 
@@ -126,6 +127,7 @@ We know exactly which states are in the US, and we have this information in the 
 dennys %>%
   filter(!(state %in% states$abbreviation))
 ```
+- *The resulting tibble has no rows, meaning that there are no Denny's locations outside the USA.*
 
 6.  Add a country variable to the Denny's dataset and set all observations equal to `"United States"`. Remember, you can use the `mutate` function for adding a variable. Make sure to save the result of this as `dennys` again so that the stored data frame contains the new variable going forward.
 
@@ -134,7 +136,7 @@ We don't need to tell R how many times to repeat the character string "United St
 ```
 
 ```{r}
-dennys %>%
+dennys <- dennys %>%
   mutate(country = "United States")
 ```
 
@@ -142,20 +144,34 @@ dennys %>%
     This might require some googling.
     Take notes, you will need to use this information in the next exercise.
 
+-   *From the website the La Quinta data was scraped from: *
+    *Ecuador - Quito*
+    *Colombia - Medellin*
+    *Chile - Santiago*
+    *UAE - Dubai*
+    *Turkey - Bodrum, Giresun, Istanbul*
+    *New Zealand - Aukland, Queenstown*
+    *China - Taiyuan, Weifang*
+    *Mexico - Aguascalientes, Ciudad Juarez, Poza Rica, Puebla, San Jose Chiapa, San Luis Potosi*
+    *Canada - Richmond, Oshawa*
+
 8.  Add a country variable to the La Quinta dataset.
     Use the `case_when` function to populate this variable.
     You'll need to refer to your notes from Exercise 7 about which country the non-US locations are in.
     Here is some starter code to get you going:
 
-```{r eval = FALSE}
-laquinta %>%
+```{r eval = TRUE}
+laquinta <- laquinta %>%
   mutate(country = case_when(
     state %in% state.abb     ~ "United States",
     state %in% c("ON", "BC") ~ "Canada",
     state == "ANT"           ~ "Colombia",
-    ...                      # fill in the rest
+    state %in% c("AG", "CH", "VE", "PU", "SL", "QR", "NL") ~ "Mexico",
+    state == "FM" ~ "Honduras"
   ))
 ```
+
+- *So, for some reason the cities with La Quintas on the website the data was scraped from didn't match up with the dataframe itself; however, I have sorted the dataframe's values, using google searches and the filter command.*
 
 🧶 ✅ ⬆️ Knit, *commit, and push your changes to GitHub with an appropriate commit message. Make sure to commit and push all changed files so that your Git pane is cleared up afterwards.*
 
@@ -163,12 +179,21 @@ Going forward we will work with the data from the United States only.
 All Denny's locations are in the United States, so we don't need to worry about them.
 However we do need to filter the La Quinta dataset for locations in United States.
 
-```{r eval=FALSE}
+```{r}
 laquinta <- laquinta %>%
   filter(country == "United States")
 ```
 
 9.  Which states have the most and fewest Denny's locations? What about La Quinta? Is this surprising? Why or why not?
+
+```{r}
+laquinta %>%
+  group_by(state) %>%
+  count() %>%
+  arrange(n)
+```
+- *Of all the US states, Delaware has the fewest Denny's locations (1), and California has by far the most, at 403. I'm not too surprised that California, Texas, and Florida have the most, although I was partially expecting Texas to have the most.*
+- *Meanwhile, in the La Quinta dataset, Texas does have the most locations of any US State, while Maine has the least. Both of these least values have been random states from the northeast, but I'm still surprised that Maine has so much fewer than Connecticut, which somehow has 6.*
 
 Next, let's calculate which states have the most Denny's locations *per thousand square miles*.
 This requires *joining* information from the frequency tables you created in Exercise 8 with information from the `states` data frame.
@@ -188,6 +213,21 @@ Before you move on the the next question, run the code above and take a look at 
 In the next exercise you will need to build on this pipe.
 
 10. Which states have the most Denny's locations per thousand square miles? What about La Quinta?
+
+```{r}
+dennys %>%
+  count(state) %>%
+  inner_join(states, by = c("state" = "abbreviation")) %>%
+  mutate(dennys_per_area = n/(1000*area)) %>%
+  arrange(desc(dennys_per_area))
+
+laquinta %>%
+  count(state) %>%
+  inner_join(states, by = c("state" = "abbreviation")) %>%
+  mutate(dennys_per_area = n/(1000*area)) %>%
+  arrange(desc(dennys_per_area))
+```
+- *DC has the most Denny's locations per thousand square kilometers, followed by Rhode Island, California, and Connecticut. In La Quinta, however, Rhode Island, Florida, Connecticut, and Maryland have the most per area.*
 
 Next, we put the two datasets together into a single data frame.
 However before we do so, we need to add an identifier variable.
@@ -223,8 +263,28 @@ You can also choose different themes to change the overall look of your plots, s
     You should also adjust the transparency of the points, by setting the `alpha` level, so that it's easier to see the overplotted ones.
     Visually, does Mitch Hedberg's joke appear to hold here?
 
+```{r}
+dn_lq %>%
+  filter(state == "NC") %>%
+  ggplot(aes(x = longitude, y = latitude, colour = establishment)) +
+  geom_point(alpha = 0.5) +
+  labs(title = "Locations of Denny's and La Quinta establishments", subtitle = "in North Carolina", x = "Latitude", y = "Longitude", colour = "Establishment")
+```
+
+- *Visually, Mitch Hedberg's joke doesn't hold up for most Denny's or La Quinta's locations, with only three seeming near-overlaps appearing on this graph.*
+
 12. Now filter the data for observations in Texas only, and recreate the plot, with an appropriate `alpha` level.
     Visually, does Mitch Hedberg's joke appear to hold here?
+
+```{r}
+dn_lq %>%
+  filter(state == "TX") %>%
+  ggplot(aes(x = longitude, y = latitude, colour = establishment)) +
+  geom_point(alpha = 0.1) +
+  labs(title = "Locations of Denny's and La Quinta establishments", subtitle = "in Texas", x = "Latitude", y = "Longitude", colour = "Establishment")
+```
+
+- *This graph seems to support his joke more than the previous graph (although note the still-numerous unpaired La Quintas and Denny's locations); however, this graph is more zoomed-out than the previous one, and, due to the large number of establishments, we can see the major (and semi-major) cities of Texas, as well as the highways connecting them, making me think that the correlation might be an artifact of the size of the graph and the density of the establishments in cities. However, this is not conclusive from the graph, and is just my personal thoughts on the distribution.*
 
 That's it for now!
 In the next lab we will take a more quantitative approach to answering these questions.
